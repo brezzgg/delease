@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/brezzgg/delease/internal/parser"
-	"github.com/brezzgg/delease/internal/parser/models"
+	"github.com/brezzgg/delease/internal/models"
 )
 
 func TestReplaceCmd(t *testing.T) {

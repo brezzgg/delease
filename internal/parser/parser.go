@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/brezzgg/delease/internal/parser/models"
+	"github.com/brezzgg/delease/internal/models"
 	"github.com/brezzgg/go-packages/lg"
 	"gopkg.in/yaml.v3"
 )
@@ -99,7 +99,9 @@ func ApplyVars(r *models.Root, task string, forceVars models.Vars) error {
 		cmds = append(cmds, res)
 	}
 
+	r.Tasks[task].Applied = true
 	r.Tasks[task].Cmds = cmds
+
 	return nil
 }
 
