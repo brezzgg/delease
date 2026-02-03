@@ -9,7 +9,6 @@ import (
 	"github.com/brezzgg/delease/internal/exec"
 )
 
-// Mock Logger для тестов
 type mockLogger struct {
 	mu       sync.Mutex
 	messages []logMessage
