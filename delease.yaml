@@ -1,0 +1,18 @@
+vars:
+  some-var-1: world!
+
+tasks:
+  task-one:
+    vars:
+      some-var-1: hui!
+    cmds:
+      - Hello {{ some-var-1 }}
+  task-two:
+    cmds:
+      - Hello {{ some-var-1 }}
+  task-three:
+    cmds:
+      - Hello {{ some-var-1 }}
+  task-four:
+    cmds:
+      - Hello {{ some-var-1 }}
