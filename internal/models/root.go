@@ -6,54 +6,87 @@ import (
 )
 
 type Root struct {
-	Vars  Vars  `yaml:"vars"`
-	Tasks Tasks `yaml:"tasks"`
+	Var   *VarSource  `yaml:"vars" json:"vars,omitempty"`
+	Tasks *TaskSource `yaml:"tasks" json:"tasks"`
+	Env   *EnvSource  `yaml:"envs" json:"envs,omitempty"`
 }
 
-func (r *Root) GetVars() Vars {
-	return r.Vars
-}
-
-func (r *Root) GetTask(name string) (*Task, error) {
-	if r.Tasks == nil {
-		return nil, lg.Ef("tasks is empty")
-	}
-
-	task, ok := r.Tasks[name]
-	if !ok {
-		return nil, lg.Ef("task '%s' not found", name)
-	}
-
-	if task == nil {
-		return nil, lg.Ef("task '%s' is nil", name)
-	}
-
-	return task, nil
-}
-
-func (r *Root) UnmarshalYAML(node *yaml.Node) error {
+func (r *Root) UnmarshalYAML(value *yaml.Node) error {
 	type rootAlias Root
+	var root rootAlias
 
-	var alias rootAlias
-	if err := node.Decode(&alias); err != nil {
+	if err := value.Decode(&root); err != nil {
 		return err
 	}
 
-	r.Vars = alias.Vars
-	r.Tasks = alias.Tasks
-
-	if r.Tasks != nil {
-		cleanMap(r.Tasks)
+	root.Tasks.Clean()
+	if root.Var == nil {
+		root.Var = &VarSource{}
 	}
+	if root.Env == nil {
+		root.Env = &EnvSource{}
+	}
+
+	r.Tasks = root.Tasks
+	r.Var = root.Var
+	r.Env = root.Env
 
 	return nil
 }
 
-type (
-	Vars  map[string]string
-	Tasks map[string]*Task
-)
+var _ yaml.Unmarshaler = (*Root)(nil)
 
-type Variabler interface {
-	GetVars() Vars
+func (r *Root) ApplyVarsToTasks(tasks []string, vars *VarSource) (*Root, error) {
+	if r == nil {
+		return nil, nil
+	}
+	
+	tLen := len(tasks)
+	if tLen == 0 {
+		return nil, lg.Ef("tasks len = %d")
+	}
+	
+	globalVars := r.Var
+	if vars != nil {
+		globalVars = globalVars.Merge(vars, true)
+	}
+	
+	newData := make(map[string]*Task, len(tasks))
+	
+	for _, name := range tasks {
+		task, ok := r.Tasks.Get(name)
+		if !ok {
+			return nil, lg.Ef("task %s not found", name)
+		}
+		
+		newTask, err := task.ApplyVars(globalVars)
+		if err != nil {
+			return nil, err
+		}
+		
+		newData[name] = newTask
+	}
+
+	newTaskSrc := &TaskSource{}
+	newTaskSrc.SetSource(newData)
+	
+	return &Root{
+		Var: r.Var,
+		Tasks: newTaskSrc,
+		Env: r.Env,
+	}, nil
+}
+
+func (r *Root) ApplyVarsToTask(task string, vars *VarSource) (*Root, error) {
+	return r.ApplyVarsToTasks([]string{task}, vars)
+}
+
+func (r *Root) ApplyVarsAll(vars *VarSource) (*Root, error) {
+	if r == nil {
+		return nil, nil
+	}
+	
+	taskNames := r.Tasks.Keys()
+	
+	return r.ApplyVarsToTasks(taskNames, vars)
 }
