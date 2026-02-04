@@ -1,7 +1,6 @@
 package exec
 
 import (
-	"strings"
 	"sync"
 )
 
@@ -22,8 +21,6 @@ func (w *SyncWriter) Write(p []byte) (n int, err error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	str := string(p)
-	if len(strings.TrimSpace(str)) != 0 {
-		w.log(str, w.t)
-	}
+	w.log(str, w.t)
 	return len(p), nil
 }

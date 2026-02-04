@@ -3,7 +3,6 @@ package exec
 import (
 	"context"
 	"errors"
-	"os"
 	"strings"
 
 	"github.com/brezzgg/go-packages/lg"
@@ -24,7 +23,7 @@ func (s *Sh) Setup(wd string, lines, env []string, log Logger) error {
 
 	runner, err := interp.New(
 		interp.Dir(wd),
-		interp.Env(expand.ListEnviron(append(os.Environ(), env...)...)),
+		interp.Env(expand.ListEnviron(env...)),
 		interp.StdIO(nil, s.ow, s.ew),
 	)
 	if err != nil {
