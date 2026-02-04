@@ -19,6 +19,6 @@ func ErrApplyVars(err error) error {
 	return lg.Ef("vars apply failed: %w", err)
 }
 
-func ErrTaskNotFound(err error) error {
-	return lg.Ef("task not found: %w", err)
+func ErrTaskNotFound(name string) error {
+	return lg.Ef("task not found: %s", name)
 }

@@ -33,6 +33,7 @@ func Run() {
 	rootCmd.AddCommand(
 		uiCmd,
 		configCmd,
+		doCmd,
 	)
 	configCmd.AddCommand(
 		configParseCmd,

@@ -28,11 +28,10 @@ var (
 
 			// if -a: apply vars
 			if applie {
-				for k := range root.Tasks {
-					err = parser.ApplyVars(root, k, nil)
-					if err != nil {
-						lg.Fatal(ErrApplyVars(err))
-					}
+				if r, err := root.ApplyVarsAll(nil); err != nil {
+					lg.Fatal(ErrApplyVars(err))
+				} else {
+					root = r
 				}
 			}
 
@@ -43,7 +42,7 @@ var (
 	configTaskCmd = &cobra.Command{
 		Use:   "task [task name]",
 		Short: "Print task",
-		Args:  cobra.RangeArgs(0, 1),
+		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
 			b, err := parser.FindConfig(config, wd)
 			if err != nil {
@@ -53,24 +52,23 @@ var (
 			if err != nil {
 				lg.Fatal(ErrParseFailed(err))
 			}
-			if len(root.Tasks) == 0 {
+			if root.Tasks.Len() == 0 {
 				return
 			}
 
 			// if -a: apply vars
 			if applie {
-				for k := range root.Tasks {
-					err = parser.ApplyVars(root, k, nil)
-					if err != nil {
-						lg.Fatal(ErrApplyVars(err))
-					}
+				if r, err := root.ApplyVarsAll(nil); err != nil {
+					lg.Fatal(ErrApplyVars(err))
+				} else {
+					root = r
 				}
 			}
 
 			// show task
-			task, err := root.GetTask(args[0])
-			if err != nil {
-				lg.Fatal(ErrTaskNotFound(err))
+			task, ok := root.Tasks.Get(args[0])
+			if !ok {
+				lg.Fatal(ErrTaskNotFound(args[0]))
 			}
 			lg.Info("ok", lg.C{args[0]: task})
 		},
@@ -88,38 +86,35 @@ var (
 			if err != nil {
 				lg.Fatal(ErrParseFailed(err))
 			}
-			if len(root.Tasks) == 0 {
+			if root.Tasks.Len() == 0 {
 				return
 			}
 
 			// if -a: apply vars
 			if applie {
-				for k := range root.Tasks {
-					err := parser.ApplyVars(root, k, nil)
-					if err != nil {
-						lg.Fatal(ErrApplyVars(err))
-					}
+				if r, err := root.ApplyVarsAll(nil); err != nil {
+					lg.Fatal(ErrApplyVars(err))
+				} else {
+					root = r
 				}
 			}
 
 			switch {
 			case taskNames:
 				// print only names
-				o := []string{}
-				for key := range root.Tasks {
-					o = append(o, key)
-				}
-				lg.Info("ok", lg.C{"n": len(o), "tasks": o})
+				keys := root.Tasks.Keys()
+				lg.Info("ok", lg.C{"n": len(keys), "tasks": keys})
 			case printCmd:
 				// print only cmds
-				c := make(lg.C, len(root.Tasks))
-				for key, val := range root.Tasks {
+				tasks := root.Tasks.GetMap()
+				c := make(lg.C, len(tasks))
+				for key, val := range tasks {
 					c[key] = val.Cmds
 				}
 				lg.Info("ok", c)
 			default:
 				// print full
-				lg.Info("ok", lg.C{"n": len(root.Tasks), "tasks": root.Tasks})
+				lg.Info("ok", lg.C{"n": root.Tasks.Len(), "tasks": root.Tasks.GetMap()})
 			}
 		},
 	}
