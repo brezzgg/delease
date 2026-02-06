@@ -5,14 +5,8 @@ type VarSource struct {
 }
 
 func (v *VarSource) Merge(oth *VarSource, force bool) *VarSource {
-	if v == nil {
-		if oth == nil {
-			return &VarSource{}
-		}
-		return oth
-	}
-	if oth == nil {
-		return v
+	if r := PremergeCheck(v, oth); r != nil {
+		return r
 	}
 
 	merged := v.YamlMapSource.Merge(oth.YamlMapSource, force)

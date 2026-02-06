@@ -102,3 +102,19 @@ func SliceCopy[V any](s []V) []V {
 	copy(r, s)
 	return r
 }
+
+// PremergeCheck checks both pointers for nil; if additional logic is required, it returns nil.
+func PremergeCheck[T any](left, right *T) *T {
+	if left == nil {
+		if right == nil {
+			var zero T
+			return &zero
+		}
+		return right
+	}
+	if right == nil {
+		return left
+	}
+
+	return nil
+}

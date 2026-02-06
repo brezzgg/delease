@@ -5,11 +5,8 @@ type EnvSource struct {
 }
 
 func (e *EnvSource) Merge(oth *EnvSource, force bool) *EnvSource {
-	if e == nil {
-		if oth == nil {
-			return &EnvSource{}
-		}
-		return oth
+	if r := PremergeCheck(e, oth); r != nil {
+		return r
 	}
 	if oth == nil {
 		return e
