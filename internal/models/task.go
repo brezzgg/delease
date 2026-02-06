@@ -1,7 +1,5 @@
 package models
 
-import "github.com/brezzgg/go-packages/lg"
-
 type TaskSource struct {
 	YamlMapSource[*Task]
 	applied bool
@@ -44,14 +42,30 @@ func (t *TaskSource) Clean() {
 	MapClean(t.GetMap())
 }
 
+func (t *TaskSource) Merge(oth *TaskSource, force bool) *TaskSource {
+	if r := PremergeCheck(t, oth); r != nil {
+		return r
+	}
+
+	merged := t.YamlMapSource.Merge(oth.YamlMapSource, force)
+	return &TaskSource{YamlMapSource: merged}
+}
+
+var (
+	_ Applier[*TaskSource]   = (*TaskSource)(nil)
+	_ Mergeable[*TaskSource] = (*TaskSource)(nil)
+)
+
 type Task struct {
-	Before  *BeforeSource `yaml:"before" json:"before,omitempty"`
-	After   *AfterSource  `yaml:"after" json:"after,omitempty"`
-	Cmds    *CmdSource    `yaml:"cmds" json:"cmds"`
-	Dir     string        `yaml:"dir" json:"dir,omitempty"`
-	Vars    *VarSource    `yaml:"vars" json:"vars,omitempty"`
-	Env     *EnvSource    `yaml:"envs" json:"envs,omitempty"`
-	Default bool          `yaml:"default" json:"default,omitempty"`
+	Before  *TaskCallSource `yaml:"before" json:"before,omitempty"`
+	After   *TaskCallSource `yaml:"after" json:"after,omitempty"`
+	Cmds    *CmdSource      `yaml:"cmds" json:"cmds"`
+	Dir     string          `yaml:"dir" json:"dir,omitempty"`
+	Vars    *VarSource      `yaml:"vars" json:"vars,omitempty"`
+	Env     *EnvSource      `yaml:"envs" json:"envs,omitempty"`
+	Default bool            `yaml:"default" json:"default,omitempty"`
+
+	appled bool
 }
 
 func (t *Task) ApplyVars(vars *VarSource) (*Task, error) {
@@ -81,13 +95,16 @@ func (t *Task) ApplyVars(vars *VarSource) (*Task, error) {
 		Vars:    t.Vars,
 		Env:     t.Env,
 		Default: t.Default,
+		appled:  true,
 	}, nil
 }
 
-type AfterSource struct {
-	YamlSliceSource[string]
+func (t *Task) Applied() bool {
+	return t.appled
 }
 
-type BeforeSource struct {
+var _ Applier[*Task] = (*Task)(nil)
+
+type TaskCallSource struct {
 	YamlSliceSource[string]
 }
