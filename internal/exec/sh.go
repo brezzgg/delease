@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 
+	"github.com/brezzgg/delease/internal/exec/handlers"
 	"github.com/brezzgg/go-packages/lg"
 	"mvdan.cc/sh/v3/expand"
 	"mvdan.cc/sh/v3/interp"
@@ -25,6 +26,7 @@ func (s *Sh) Setup(wd string, lines, env []string, log Logger) error {
 		interp.Dir(wd),
 		interp.Env(expand.ListEnviron(env...)),
 		interp.StdIO(nil, s.ow, s.ew),
+		interp.ExecHandlers(handlers.ExecHandler),
 	)
 	if err != nil {
 		return err
@@ -79,5 +81,7 @@ func (s *Sh) Run(ctx context.Context, resChan chan<- Result) {
 			return
 		}
 	}
+	s.ow.Flush()
+	s.ew.Flush()
 	resChan <- last
 }
