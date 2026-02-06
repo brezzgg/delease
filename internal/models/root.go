@@ -34,56 +34,44 @@ func (r *Root) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-var _ yaml.Unmarshaler = (*Root)(nil)
-
-func (r *Root) ApplyVarsToTasks(tasks []string, vars *VarSource) (*Root, error) {
+func (r *Root) ApplyVars(vars *VarSource) (*Root, error) {
 	if r == nil {
-		return nil, nil
+		return nil, lg.Ef("root is nil")
 	}
-	
-	tLen := len(tasks)
-	if tLen == 0 {
-		return nil, lg.Ef("tasks len = %d")
+	if r.Tasks == nil {
+		return &Root{
+			Var:     r.Var,
+			Tasks:   r.Tasks,
+			Env:     r.Env,
+			applied: true,
+		}, nil
 	}
-	
-	globalVars := r.Var
+	global := r.Var
 	if vars != nil {
-		globalVars = globalVars.Merge(vars, true)
+		global = global.Merge(vars, true)
 	}
-	
-	newData := make(map[string]*Task, len(tasks))
-	
-	for _, name := range tasks {
-		task, ok := r.Tasks.Get(name)
-		if !ok {
-			return nil, lg.Ef("task %s not found", name)
-		}
-		
-		newTask, err := task.ApplyVars(globalVars)
+	tasks := make(map[string]*Task, r.Tasks.Len())
+	for k, v := range r.Tasks.GetMapCopy() {
+		applied, err := v.ApplyVars(global)
 		if err != nil {
-			return nil, err
+			return nil, lg.Ef("task %s: %w", k, err)
 		}
-		
-		newData[name] = newTask
+		tasks[k] = applied
 	}
-
-	newTaskSrc := &TaskSource{}
-	newTaskSrc.SetSource(newData)
-	
+	taskSrc := &TaskSource{}
+	taskSrc.SetSource(tasks)
 	return &Root{
-		Var: r.Var,
-		Tasks: newTaskSrc,
-		Env: r.Env,
+		Var:     r.Var,
+		Tasks:   taskSrc,
+		Env:     r.Env,
+		applied: true,
 	}, nil
 }
 
-func (r *Root) ApplyVarsToTask(task string, vars *VarSource) (*Root, error) {
-	return r.ApplyVarsToTasks([]string{task}, vars)
+func (r *Root) Applied() bool {
+	return r.applied
 }
 
-func (r *Root) ApplyVarsAll(vars *VarSource) (*Root, error) {
-	if r == nil {
-		return nil, nil
 	}
 	
 	taskNames := r.Tasks.Keys()

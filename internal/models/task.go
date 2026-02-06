@@ -4,56 +4,43 @@ import "github.com/brezzgg/go-packages/lg"
 
 type TaskSource struct {
 	YamlMapSource[*Task]
+	applied bool
 }
 
-func (t *TaskSource) ApplyVars(name string, vars *VarSource) (*TaskSource, error) {
+func (t *TaskSource) ApplyVars(vars *VarSource) (*TaskSource, error) {
 	if t == nil {
-		return nil, lg.Ef("task source is nil")
-	}
-	task, ok := t.Get(name)
-	if !ok {
-		return nil, lg.Ef("task %s not found", name)
+		return nil, nil
 	}
 
-	newTask, err := task.ApplyVars(vars)
-	if err != nil {
-		return nil, err
+	newData := make(map[string]*Task, t.Len())
+
+	for _, key := range t.Keys() {
+		task, ok := t.Get(key)
+		if !ok {
+			continue
+		}
+		newTask, err := task.ApplyVars(vars)
+		if err != nil {
+			return nil, err
+		}
+		newData[key] = newTask
 	}
 
-	newData := t.GetMapCopy()
-	newData[name] = newTask
-
-	res := &TaskSource{}
+	res := &TaskSource{
+		applied: true,
+	}
 	res.SetSource(newData)
-
 	return res, nil
 }
 
-func (t *TaskSource) ApplyVarsAll(vars *VarSource) (*TaskSource, error) {
-    if t == nil {
-        return nil, nil
-    }
-    
-    newData := make(map[string]*Task, t.Len())
-    
-    for _, key := range t.Keys() {
-        task, ok := t.Get(key)
-        if !ok {
-            continue
-        }
-        newTask, err := task.ApplyVars(vars)
-        if err != nil {
-            return nil, err
-        }
-        newData[key] = newTask
-    }
-
-	res := &TaskSource{}
-	res.SetSource(newData)
-    return res, nil
+func (t *TaskSource) Applied() bool {
+	return t.applied
 }
 
 func (t *TaskSource) Clean() {
+	if t == nil {
+		return
+	}
 	MapClean(t.GetMap())
 }
 
