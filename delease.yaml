@@ -1,18 +1,25 @@
 vars:
-  some-var-1: world!
+  build-dir: ./build
+  build-path: ./build/delease
 
 tasks:
-  task-one:
-    vars:
-      some-var-1: hui!
+  build:
+    default: true
+    cmds: 
+      - run: |
+          rm ${{build-dir}}/* -f
+          GOOS=windows GOARCH=${{os.arch}} go build -o ${{build-path}}.exe .
+          GOOS=linux GOARCH=${{os.arch}} go build -o ${{build-path}} .
+  run:
+    before: ["build"]
     cmds:
-      - Hello {{ some-var-1 }}
-  task-two:
-    cmds:
-      - Hello {{ some-var-1 }}
-  task-three:
-    cmds:
-      - Hello {{ some-var-1 }}
-  task-four:
-    cmds:
-      - Hello {{ some-var-1 }}
+      - os: windows
+        run: "${{build-path}}.exe ${{os.args}}"
+      - os: linux
+        run: "${{build-path}} ${{os.args}}"
+  t:
+    cmds: 
+      - run: |
+          go version
+          echo "${{.build-path}}"
+          dlv version
