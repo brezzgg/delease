@@ -6,6 +6,8 @@ require (
 	github.com/brezzgg/go-packages v1.4.5
 	github.com/jroimartin/gocui v0.5.0
 	github.com/spf13/cobra v1.10.2
+	golang.org/x/sys v0.33.0
+	golang.org/x/text v0.33.0
 	gopkg.in/yaml.v3 v3.0.1
 	mvdan.cc/sh/v3 v3.12.0
 )
@@ -16,6 +18,5 @@ require (
 	github.com/mattn/go-runewidth v0.0.9 // indirect
 	github.com/nsf/termbox-go v1.1.1 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
-	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect
 )
