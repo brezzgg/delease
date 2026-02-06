@@ -43,7 +43,9 @@ func setupSh(t *testing.T, lines, env []string) (*exec.Sh, *mockLogger) {
 	sh := &exec.Sh{}
 	logger := &mockLogger{}
 
-	err := sh.Setup("/tmp", lines, env, logger.Log)
+	workDir := t.TempDir()
+	
+	err := sh.Setup(workDir, lines, env, logger.Log)
 	if err != nil {
 		t.Fatalf("Setup failed: %v", err)
 	}
@@ -55,36 +57,44 @@ func TestSh_Setup(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name    string
-		wd      string
-		lines   []string
-		env     []string
-		wantErr bool
+		name      string
+		setupWd   func(t *testing.T) string
+		lines     []string
+		env       []string
+		wantErr   bool
 	}{
 		{
-			name:    "valid setup",
-			wd:      "/tmp",
+			name: "valid setup",
+			setupWd: func(t *testing.T) string {
+				return t.TempDir()
+			},
 			lines:   []string{"echo hello", "pwd"},
 			env:     []string{"VAR=value"},
 			wantErr: false,
 		},
 		{
-			name:    "empty lines",
-			wd:      "/tmp",
+			name: "empty lines",
+			setupWd: func(t *testing.T) string {
+				return t.TempDir()
+			},
 			lines:   []string{},
 			env:     []string{},
 			wantErr: false,
 		},
 		{
-			name:    "with multiple env vars",
-			wd:      ".",
+			name: "with multiple env vars",
+			setupWd: func(t *testing.T) string {
+				return "."
+			},
 			lines:   []string{"echo $VAR1 $VAR2"},
 			env:     []string{"VAR1=hello", "VAR2=world"},
 			wantErr: false,
 		},
 		{
-			name:    "relative working directory",
-			wd:      "..",
+			name: "relative working directory",
+			setupWd: func(t *testing.T) string {
+				return ".."
+			},
 			lines:   []string{"pwd"},
 			env:     []string{},
 			wantErr: false,
@@ -98,7 +108,9 @@ func TestSh_Setup(t *testing.T) {
 			sh := &exec.Sh{}
 			logger := &mockLogger{}
 
-			err := sh.Setup(tt.wd, tt.lines, tt.env, logger.Log)
+			wd := tt.setupWd(t)
+
+			err := sh.Setup(wd, tt.lines, tt.env, logger.Log)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Setup() error = %v, wantErr %v", err, tt.wantErr)
