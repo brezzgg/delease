@@ -12,7 +12,7 @@ func ErrBadConfig(err error) error {
 
 func ErrParseFailed(err error) error {
 	text := strings.ReplaceAll(err.Error(), "\n", " ")
-	return lg.Ef("parse failed: %s", text)
+	return lg.Ef("parse error: %s", text)
 }
 
 func ErrApplyVars(err error) error {

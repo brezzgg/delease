@@ -17,18 +17,15 @@ var (
 		Use:   "parse",
 		Short: "Show all parsed data",
 		Run: func(cmd *cobra.Command, args []string) {
-			b, err := parser.FindConfig(config, wd)
-			if err != nil {
-				lg.Fatal(ErrBadConfig(err))
-			}
-			root, err := parser.Parse(b)
+			parser := parser.New(config, wd)
+			root, err := parser.Parse()
 			if err != nil {
 				lg.Fatal(ErrParseFailed(err))
 			}
 
 			// if -a: apply vars
 			if applie {
-				if r, err := root.ApplyVarsAll(nil); err != nil {
+				if r, err := root.ApplyVars(nil); err != nil {
 					lg.Fatal(ErrApplyVars(err))
 				} else {
 					root = r
@@ -44,11 +41,8 @@ var (
 		Short: "Print task",
 		Args:  cobra.ExactArgs(1),
 		Run: func(cmd *cobra.Command, args []string) {
-			b, err := parser.FindConfig(config, wd)
-			if err != nil {
-				lg.Fatal(ErrBadConfig(err))
-			}
-			root, err := parser.Parse(b)
+			parser := parser.New(config, wd)
+			root, err := parser.Parse()
 			if err != nil {
 				lg.Fatal(ErrParseFailed(err))
 			}
@@ -58,7 +52,7 @@ var (
 
 			// if -a: apply vars
 			if applie {
-				if r, err := root.ApplyVarsAll(nil); err != nil {
+				if r, err := root.ApplyVars(nil); err != nil {
 					lg.Fatal(ErrApplyVars(err))
 				} else {
 					root = r
@@ -78,11 +72,8 @@ var (
 		Use:   "tasks",
 		Short: "Print all tasks",
 		Run: func(cmd *cobra.Command, args []string) {
-			b, err := parser.FindConfig(config, wd)
-			if err != nil {
-				lg.Fatal(ErrBadConfig(err))
-			}
-			root, err := parser.Parse(b)
+			parser := parser.New(config, wd)
+			root, err := parser.Parse()
 			if err != nil {
 				lg.Fatal(ErrParseFailed(err))
 			}
@@ -92,7 +83,7 @@ var (
 
 			// if -a: apply vars
 			if applie {
-				if r, err := root.ApplyVarsAll(nil); err != nil {
+				if r, err := root.ApplyVars(nil); err != nil {
 					lg.Fatal(ErrApplyVars(err))
 				} else {
 					root = r

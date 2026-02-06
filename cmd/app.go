@@ -30,6 +30,16 @@ func Run() {
 		&taskNames, "names", "n", false, "print names",
 	)
 
+	doCmd.PersistentFlags().StringVarP(
+		&doArgs, "args", "A", "", "set args that can be used as {{ os.args }}",
+	)
+	doCmd.PersistentFlags().StringArrayVarP(
+		&doVars, "vars", "V", nil, "set vars that can be used as {{ var-name }}",
+	)
+	doCmd.PersistentFlags().StringArrayVarP(
+		&doEnvs, "envs", "E", nil, "set envs that can be used as $env-name",
+	)
+
 	rootCmd.AddCommand(
 		uiCmd,
 		configCmd,

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/brezzgg/delease/gui"
 	"github.com/spf13/cobra"
 )
 
@@ -14,12 +13,13 @@ var (
 		Use:   "ui",
 		Short: "Open ui",
 		Run: func(cmd *cobra.Command, args []string) {
+			// TODO:
 		},
 	}
 
 	configCmd = &cobra.Command{
 		Use:     "config",
 		Aliases: []string{"conf", "cfg"},
-		Short: "Manage configuration",
+		Short:   "Manage configuration",
 	}
 )
