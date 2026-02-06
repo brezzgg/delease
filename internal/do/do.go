@@ -3,7 +3,6 @@ package do
 import (
 	"context"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/brezzgg/delease/internal/exec"
@@ -13,7 +12,10 @@ import (
 
 type Do struct {
 	root *models.Root
-	args string
+
+	runtimeArgs string
+	runtimeEnvs *models.EnvSource
+	runtimeVars *models.VarSource
 }
 
 type DoOption func(*Do)
@@ -30,65 +32,48 @@ func New(root *models.Root, opts ...DoOption) *Do {
 
 func WithArgs(args string) DoOption {
 	return func(d *Do) {
-		d.args = args
+		d.runtimeArgs = args
 	}
 }
 
-func (d *Do) preload(name string) ([]*models.Task, error) {
-	task, err := d.load(name)
-	if err != nil {
-		return nil, lg.Ef("task %s: %w", name, err)
-	}
-
-	beforeTasks, afterTasks, err := d.loadBeforeAfter(task)
-	if err != nil {
-		return nil, lg.Ef("task %s: %w", name, err)
-	}
-
-	res := beforeTasks
-	res = append(res, task)
-	res = append(res, afterTasks...)
-
-	return res, nil
-}
-
-func (d *Do) loadBeforeAfter(task *models.Task) (before, after []*models.Task, err error) {
-	if task.Before != nil {
-		for _, v := range task.Before.Get() {
-			t, e := d.load(v)
-			if e != nil {
-				return nil, nil, lg.Ef("failed to load before %s: %w", v, e)
-			}
-			before = append(before, t)
+func WithEnvs(envs []string) DoOption {
+	return func(d *Do) {
+		if len(envs) == 0 {
+			return 
 		}
-	}
-
-	if task.After != nil {
-		for _, v := range task.After.Get() {
-			t, e := d.load(v)
-			if e != nil {
-				return nil, nil, lg.Ef("failed to load after %s: %w", v, e)
+		data := make(map[string]string, len(envs))
+		for _, v := range envs {
+			if strings.Contains(v, "=") {
+				before, after, ok := strings.Cut(v, "=")
+				if ok {
+					data[before] = after
+				}
 			}
-			after = append(after, t)
 		}
+		src := &models.EnvSource{}
+		src.SetSource(data)
+		d.runtimeEnvs = src
 	}
-
-	return before, after, err
 }
 
-func (d *Do) load(name string) (*models.Task, error) {
-	applied, err := d.root.ApplyVarsToTask(name, d.GetOsVars(d.args))
-	if err != nil {
-		return nil, err
+func WithVars(vars []string) DoOption {
+	return func(d *Do) {
+		if len(vars) == 0 {
+			return 
+		}
+		data := make(map[string]string, len(vars))
+		for _, v := range vars {
+			if strings.Contains(v, "=") {
+				before, after, ok := strings.Cut(v, "=")
+				if ok {
+					data[before] = after
+				}
+			}
+		}
+		src := &models.VarSource{}
+		src.SetSource(data)
+		d.runtimeVars = src
 	}
-	if applied.Tasks.Len() != 1 {
-		return nil, lg.Ef("bad task len %d", applied.Tasks.Len())
-	}
-
-	for _, v := range applied.Tasks.GetMap() {
-		return v, nil
-	}
-	return nil, lg.Ef("internal")
 }
 
 func (d *Do) Execute(ctx context.Context, tasks []string) error {
@@ -104,69 +89,70 @@ func (d *Do) Execute(ctx context.Context, tasks []string) error {
 		}
 	}
 
-	taskMatrix := make([][]*models.Task, 0, len(tasks))
+	if d.root.Applied() {
+		return lg.Ef("root cant be applied")
+	}
 
-	for _, name := range tasks {
-		t, err := d.preload(name)
+	vars := d.GetOsVars(d.runtimeArgs)
+	if d.runtimeVars != nil {
+		vars = vars.Merge(d.runtimeVars, true)
+	}
+
+	newRoot, err := d.root.ApplyVars(vars)
+	if err != nil {
+		return lg.Ef("faild to apply vars: %w", err)
+	}
+	d.root = newRoot
+
+	taskLoader := NewTaskLoader(tasks, d.root)
+	taskArr, err := taskLoader.Load()
+	if err != nil {
+		return err
+	}
+	if len(taskArr) == 0 {
+		return lg.Ef("nothing to do")
+	}
+
+	environ := d.GetEnv()
+
+	for _, task := range taskArr {
+		env := environ
+		env = env.Merge(d.root.Env, true)
+		env = env.Merge(task.Env, true)
+		if d.runtimeEnvs != nil {
+			env = env.Merge(d.runtimeEnvs, true)
+		}
+
+		cmds := task.Cmds.Get()
+		var lines []string
+		for _, v := range cmds {
+			lines = append(lines, v.Cmd)
+		}
+
+		wd, err := d.GetDir(task.Dir)
 		if err != nil {
-			return err
+			return lg.Ef("bad working directory: %w", err)
 		}
-		taskMatrix = append(taskMatrix, t)
-	}
 
-	environ := d.environ()
-
-	for _, row := range taskMatrix {
-		for _, task := range row {
-			env := environ
-			env = env.Merge(d.root.Env, true)
-			env = env.Merge(task.Env, true)
-
-			lines := task.Cmds.Get()
-
-			var (
-				wd  = task.Dir
-				err error
-			)
-			if wd == "" {
-				wd, err = os.Getwd()
-				if err != nil {
-					return lg.Ef("bad wd: %s", err)
-				}
+		var exe exec.Executor = &exec.Sh{}
+		exe.Setup(wd, lines, env.StringSlice(), func(m string, t exec.MsgType) {
+			if t == exec.MsgTypeStdout {
+				fmt.Print(m)
+			} else {
+				fmt.Print(m)
 			}
+		})
 
-			var exe exec.Executor = &exec.Sh{}
-			exe.Setup(wd, lines, env.StringSlice(), func(m string, t exec.MsgType) {
-				if t == exec.MsgTypeStdout {
-					fmt.Print(m)
-				} else {
-					fmt.Print(m)
-				}
-			})
-
-			ch := make(chan exec.Result, 1)
-			exe.Run(ctx, ch)
-			res := <-ch
-			if res.Error != nil {
-				return lg.Ef("exec error: %s", res.Error)
-			}
-			if res.Code != 0 {
-				return lg.Ef("app exit with status code %d", res.Code)
-			}
+		ch := make(chan exec.Result, 1)
+		exe.Run(ctx, ch)
+		res := <-ch
+		if res.Error != nil {
+			return lg.Ef("exec error: %s", res.Error)
+		}
+		if res.Code != 0 {
+			return lg.Ef("app exit with status code %d", res.Code)
 		}
 	}
+
 	return nil
-}
-
-func (d *Do) environ() *models.EnvSource {
-	envs := os.Environ()
-	m := make(map[string]string, 10)
-	for _, v := range envs {
-		if before, after, ok := strings.Cut(v, "="); ok {
-			m[before] = after
-		}
-	}
-	r := &models.EnvSource{}
-	r.SetSource(m)
-	return r
 }
