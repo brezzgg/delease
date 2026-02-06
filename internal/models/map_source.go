@@ -35,6 +35,9 @@ func (e *YamlMapSource[V]) Merge(oth YamlMapSource[V], force bool) YamlMapSource
 }
 
 func (e *YamlMapSource[V]) Len() int {
+	if e == nil {
+		return 0
+	}
 	return len(e.data)
 }
 

@@ -23,6 +23,9 @@ func (s *YamlSliceSource[V]) GetCopy() []V {
 }
 
 func (s *YamlSliceSource[V]) Len() int {
+	if s == nil {
+		return 0
+	}
 	return len(s.data)
 }
 
