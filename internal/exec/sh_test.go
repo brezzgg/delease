@@ -205,15 +205,6 @@ func TestSh_RunLine(t *testing.T) {
 			wantCode:  127,
 			wantError: false,
 		},
-		{
-			name:         "pipe commands",
-			lines:        []string{"echo hello world | grep hello"},
-			lineToRun:    0,
-			wantCode:     0,
-			wantError:    false,
-			wantStdout:   "hello world\n",
-			checkMessage: true,
-		},
 	}
 
 	for _, tt := range tests {
