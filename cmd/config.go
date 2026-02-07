@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"github.com/brezzgg/delease/internal/do"
+	"github.com/brezzgg/delease/internal/models"
 	"github.com/brezzgg/delease/internal/parser"
 	"github.com/brezzgg/go-packages/lg"
 	"github.com/spf13/cobra"
@@ -8,7 +10,7 @@ import (
 
 var (
 	printCmd  bool
-	applie    bool
+	compile    bool
 	taskNames bool
 )
 
@@ -23,16 +25,25 @@ var (
 				lg.Fatal(ErrParseFailed(err))
 			}
 
-			// if -a: apply vars
-			if applie {
-				if r, err := root.ApplyVars(nil); err != nil {
-					lg.Fatal(ErrApplyVars(err))
-				} else {
-					root = r
+			compileC := make(lg.C)
+			// if -a: compile vars
+			if compile {
+				ctx := models.NewRootVarContext(
+					root.Var,
+					do.GetOsVars(""),
+				)
+
+				for name, task := range root.Tasks.GetSource() {
+					taskCtx := ctx.Child(task.Vars)
+					compiled, err := task.Cmds.Compile(taskCtx)
+					if err != nil {
+						lg.Fatal(ErrCompileVars(err))
+					}
+					compileC[name] = compiled
 				}
 			}
 
-			lg.Info("parse successful", lg.C{"root": root})
+			lg.Info("parse successful", lg.C{"root": root}, lg.C{"cmds": compileC})
 		},
 	}
 
@@ -50,21 +61,26 @@ var (
 				return
 			}
 
-			// if -a: apply vars
-			if applie {
-				if r, err := root.ApplyVars(nil); err != nil {
-					lg.Fatal(ErrApplyVars(err))
-				} else {
-					root = r
-				}
-			}
-
-			// show task
 			task, ok := root.Tasks.Get(args[0])
 			if !ok {
 				lg.Fatal(ErrTaskNotFound(args[0]))
 			}
-			lg.Info("ok", lg.C{args[0]: task})
+
+			// if -a: compile vars
+			if compile {
+				ctx := models.NewRootVarContext(root.Var, do.GetOsVars(""))
+				taskCtx := ctx.Child(task.Vars)
+				compiled, err := task.Cmds.Compile(taskCtx)
+				if err != nil {
+					lg.Fatal(ErrCompileVars(err))
+				}
+				lg.Info("ok", lg.C{
+					"task":          args[0],
+					"compiled_cmds": compiled,
+				})
+			} else {
+				lg.Info("ok", lg.C{args[0]: task})
+			}
 		},
 	}
 
@@ -81,31 +97,30 @@ var (
 				return
 			}
 
-			// if -a: apply vars
-			if applie {
-				if r, err := root.ApplyVars(nil); err != nil {
-					lg.Fatal(ErrApplyVars(err))
-				} else {
-					root = r
-				}
-			}
-
 			switch {
 			case taskNames:
-				// print only names
 				keys := root.Tasks.Keys()
 				lg.Info("ok", lg.C{"n": len(keys), "tasks": keys})
 			case printCmd:
-				// print only cmds
-				tasks := root.Tasks.GetMap()
-				c := make(lg.C, len(tasks))
-				for key, val := range tasks {
-					c[key] = val.Cmds
+				c := make(lg.C, root.Tasks.Len())
+				if compile {
+					ctx := models.NewRootVarContext(root.Var, do.GetOsVars(""))
+					for key, task := range root.Tasks.GetSource() {
+						taskCtx := ctx.Child(task.Vars)
+						compiled, err := task.Cmds.Compile(taskCtx)
+						if err != nil {
+							lg.Fatal(ErrCompileVars(err))
+						}
+						c[key] = compiled
+					}
+				} else {
+					for key, task := range root.Tasks.GetSource() {
+						c[key] = task.Cmds
+					}
 				}
 				lg.Info("ok", c)
 			default:
-				// print full
-				lg.Info("ok", lg.C{"n": root.Tasks.Len(), "tasks": root.Tasks.GetMap()})
+				lg.Info("ok", lg.C{"n": root.Tasks.Len(), "tasks": root.Tasks.GetSource()})
 			}
 		},
 	}

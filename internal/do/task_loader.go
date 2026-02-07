@@ -21,9 +21,6 @@ func NewTaskLoader(tasks []string, root *models.Root) *TaskLoader {
 }
 
 func (t *TaskLoader) Load() ([]*models.Task, error) {
-	if !t.root.Applied() {
-		return nil, lg.Ef("root must be applied")
-	}
 	tasks := []*models.Task{}
 	for _, task := range t.tasks {
 		t.head = task

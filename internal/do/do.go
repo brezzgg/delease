@@ -78,7 +78,7 @@ func WithVars(vars []string) DoOption {
 
 func (d *Do) Execute(ctx context.Context, tasks []string) error {
 	if len(tasks) == 0 {
-		for name, task := range d.root.Tasks.GetMap() {
+		for name, task := range d.root.Tasks.GetSource() {
 			if task.Default {
 				tasks = append(tasks, name)
 				continue
@@ -89,20 +89,14 @@ func (d *Do) Execute(ctx context.Context, tasks []string) error {
 		}
 	}
 
-	if d.root.Applied() {
-		return lg.Ef("root cant be applied")
-	}
-
-	vars := d.GetOsVars(d.runtimeArgs)
+	osVars := GetOsVars(d.runtimeArgs)
+	runtimeVars := osVars
 	if d.runtimeVars != nil {
-		vars = vars.Merge(d.runtimeVars, true)
+		runtimeVars = osVars.Merge(d.runtimeVars, true)
 	}
 
-	newRoot, err := d.root.ApplyVars(vars)
-	if err != nil {
-		return lg.Ef("faild to apply vars: %w", err)
-	}
-	d.root = newRoot
+	rootCtx := models.NewRootVarContext(d.root.Var, runtimeVars)
+	compiler := NewTaskCompiler(rootCtx)
 
 	taskLoader := NewTaskLoader(tasks, d.root)
 	taskArr, err := taskLoader.Load()
@@ -113,20 +107,17 @@ func (d *Do) Execute(ctx context.Context, tasks []string) error {
 		return lg.Ef("nothing to do")
 	}
 
-	environ := d.GetEnv()
+	environ := GetEnv()
 
 	for _, task := range taskArr {
-		env := environ
-		env = env.Merge(d.root.Env, true)
-		env = env.Merge(task.Env, true)
-		if d.runtimeEnvs != nil {
-			env = env.Merge(d.runtimeEnvs, true)
+		compiledCmds, err := compiler.Compile(task)
+		if err != nil {
+			return lg.Ef("failed to compile task: %w", err)
 		}
 
-		cmds := task.Cmds.Get()
-		var lines []string
-		for _, v := range cmds {
-			lines = append(lines, v.Cmd)
+		env := environ.Merge(d.root.Env, true).Merge(task.Env, true)
+		if d.runtimeEnvs != nil {
+			env = env.Merge(d.runtimeEnvs, true)
 		}
 
 		wd, err := d.GetDir(task.Dir)
@@ -135,7 +126,7 @@ func (d *Do) Execute(ctx context.Context, tasks []string) error {
 		}
 
 		var exe exec.Executor = &exec.Sh{}
-		exe.Setup(wd, lines, env.StringSlice(), func(m string, t exec.MsgType) {
+		exe.Setup(wd, compiledCmds, env.StringSlice(), func(m string, t exec.MsgType) {
 			if t == exec.MsgTypeStdout {
 				fmt.Print(m)
 			} else {

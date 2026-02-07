@@ -10,48 +10,48 @@ type YamlMapSource[V any] struct {
 	data map[string]V
 }
 
-func (e *YamlMapSource[V]) SetSource(v map[string]V) {
-	e.data = v
+func (s *YamlMapSource[V]) GetSource() map[string]V {
+	return s.data
 }
 
-func (e *YamlMapSource[V]) Get(key string) (V, bool) {
-	return MapGet(e.data, key)
+func (s *YamlMapSource[V]) GetSourceCopy() map[string]V {
+	return MapCopy(s.data)
 }
 
-func (e *YamlMapSource[V]) Keys() []string {
-	return MapKeys(e.data)
+func (s *YamlMapSource[V]) SetSource(v map[string]V) {
+	s.data = v
 }
 
-func (e *YamlMapSource[V]) GetMap() map[string]V {
-	return e.data
+func (s *YamlMapSource[V]) Get(key string) (V, bool) {
+	return MapGet(s.data, key)
 }
 
-func (e *YamlMapSource[V]) GetMapCopy() map[string]V {
-	return MapCopy(e.data)
+func (s *YamlMapSource[V]) Keys() []string {
+	return MapKeys(s.data)
 }
 
-func (e *YamlMapSource[V]) Merge(oth YamlMapSource[V], force bool) YamlMapSource[V] {
-	return YamlMapSource[V]{data: MapMerge(e.data, oth.GetMap(), force)}
+func (s *YamlMapSource[V]) Merge(oth YamlMapSource[V], force bool) YamlMapSource[V] {
+	return YamlMapSource[V]{data: MapMerge(s.data, oth.GetSource(), force)}
 }
 
-func (e *YamlMapSource[V]) Len() int {
-	if e == nil {
+func (s *YamlMapSource[V]) Len() int {
+	if s == nil {
 		return 0
 	}
-	return len(e.data)
+	return len(s.data)
 }
 
-func (e *YamlMapSource[V]) Set(key string, val V, force bool) {
-	MapSet(e.data, key, val, force)
+func (s *YamlMapSource[V]) Set(key string, val V, force bool) {
+	MapSet(s.data, key, val, force)
 }
 
-func (e *YamlMapSource[V]) UnmarshalYAML(value *yaml.Node) error {
-	e.data = make(map[string]V, 0)
-	return MapUnmarshal(&e.data, value)
+func (s *YamlMapSource[V]) UnmarshalYAML(value *yaml.Node) error {
+	s.data = make(map[string]V, 0)
+	return MapUnmarshal(&s.data, value)
 }
 
-func (e *YamlMapSource[V]) MarshalJSON() ([]byte, error) {
-	return json.Marshal(e.data)
+func (s *YamlMapSource[V]) MarshalJSON() ([]byte, error) {
+	return json.Marshal(s.data)
 }
 
-var _ Source = (*YamlMapSource[any])(nil)
+var _ Source[map[string]any] = (*YamlMapSource[any])(nil)

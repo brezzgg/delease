@@ -18,7 +18,7 @@ func Run() {
 	)
 
 	configCmd.PersistentFlags().BoolVarP(
-		&applie, "applie", "a", false, "apply variables",
+		&compile, "compile", "a", false, "compile variables",
 	)
 	configTaskCmd.PersistentFlags().BoolVarP(
 		&printCmd, "print-cmd", "c", false, "print task commands",

@@ -10,8 +10,16 @@ type YamlSliceSource[V any] struct {
 	data []V
 }
 
-func (s *YamlSliceSource[V]) SetSource(v []V) {
-	s.data = v
+func (s *YamlSliceSource[V]) GetSource() []V {
+	return s.data
+}
+
+func (s *YamlSliceSource[V]) GetSourceCopy() []V {
+	return SliceCopy(s.data)
+}
+
+func (s *YamlSliceSource[V]) SetSource(src []V) {
+	s.data = src
 }
 
 func (s *YamlSliceSource[V]) Get() []V {
@@ -38,4 +46,4 @@ func (s *YamlSliceSource[V]) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.data)
 }
 
-var _ Source = (*YamlSliceSource[any])(nil)
+var _ Source[[]any] = (*YamlSliceSource[any])(nil)

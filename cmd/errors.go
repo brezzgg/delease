@@ -15,8 +15,8 @@ func ErrParseFailed(err error) error {
 	return lg.Ef("parse error: %s", text)
 }
 
-func ErrApplyVars(err error) error {
-	return lg.Ef("vars apply failed: %w", err)
+func ErrCompileVars(err error) error {
+	return lg.Ef("vars compile failed: %w", err)
 }
 
 func ErrTaskNotFound(name string) error {

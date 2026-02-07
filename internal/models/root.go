@@ -1,7 +1,6 @@
 package models
 
 import (
-	"github.com/brezzgg/go-packages/lg"
 	"gopkg.in/yaml.v3"
 )
 
@@ -10,8 +9,6 @@ type Root struct {
 	Var     *VarSource     `yaml:"vars" json:"vars,omitempty"`
 	Tasks   *TaskSource    `yaml:"tasks" json:"tasks"`
 	Env     *EnvSource     `yaml:"envs" json:"envs,omitempty"`
-
-	applied bool
 }
 
 func (r *Root) UnmarshalYAML(value *yaml.Node) error {
@@ -41,51 +38,9 @@ func (r *Root) UnmarshalYAML(value *yaml.Node) error {
 	return nil
 }
 
-func (r *Root) ApplyVars(vars *VarSource) (*Root, error) {
-	if r == nil {
-		return nil, lg.Ef("root is nil")
-	}
-	if r.Tasks == nil {
-		return &Root{
-			Var:     r.Var,
-			Tasks:   r.Tasks,
-			Env:     r.Env,
-			applied: true,
-		}, nil
-	}
-	global := r.Var
-	if vars != nil {
-		global = global.Merge(vars, true)
-	}
-	tasks := make(map[string]*Task, r.Tasks.Len())
-	for k, v := range r.Tasks.GetMapCopy() {
-		applied, err := v.ApplyVars(global)
-		if err != nil {
-			return nil, lg.Ef("task %s: %w", k, err)
-		}
-		tasks[k] = applied
-	}
-	taskSrc := &TaskSource{}
-	taskSrc.SetSource(tasks)
-	return &Root{
-		Var:     r.Var,
-		Tasks:   taskSrc,
-		Env:     r.Env,
-		applied: true,
-	}, nil
-}
-
-func (r *Root) Applied() bool {
-	return r.applied
-}
-
 func (r *Root) Merge(oth *Root, force bool) *Root {
 	if res := PremergeCheck(r, oth); res != nil {
 		return res
-	}
-
-	if r.applied != oth.applied {
-		panic("applied root merges with not applied")
 	}
 
 	res := &Root{}
@@ -99,7 +54,6 @@ func (r *Root) Merge(oth *Root, force bool) *Root {
 
 var (
 	_ yaml.Unmarshaler = (*Root)(nil)
-	_ Applier[*Root]   = (*Root)(nil)
 	_ Mergeable[*Root] = (*Root)(nil)
 )
 

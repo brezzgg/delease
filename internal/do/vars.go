@@ -20,7 +20,7 @@ func (v OsVar) String() string {
 	return string(v)
 }
 
-func (d *Do) GetOsVars(args string) *models.VarSource {
+func GetOsVars(args string) *models.VarSource {
 	v := &models.VarSource{}
 	v.SetSource(map[string]string{
 		OsVarArgs.String(): args,
@@ -30,7 +30,7 @@ func (d *Do) GetOsVars(args string) *models.VarSource {
 	return v
 }
 
-func (d *Do) GetEnv() *models.EnvSource {
+func GetEnv() *models.EnvSource {
 	envs := os.Environ()
 	m := make(map[string]string, 10)
 	for _, v := range envs {
