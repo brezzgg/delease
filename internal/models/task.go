@@ -29,7 +29,6 @@ type Task struct {
 	Dir     string          `yaml:"dir" json:"dir,omitempty"`
 	Vars    *VarSource      `yaml:"vars" json:"vars,omitempty"`
 	Env     *EnvSource      `yaml:"envs" json:"envs,omitempty"`
-	Default bool            `yaml:"default" json:"default,omitempty"`
 }
 
 type TaskCallSource struct {

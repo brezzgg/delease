@@ -39,7 +39,7 @@ func WithArgs(args string) DoOption {
 func WithEnvs(envs []string) DoOption {
 	return func(d *Do) {
 		if len(envs) == 0 {
-			return 
+			return
 		}
 		data := make(map[string]string, len(envs))
 		for _, v := range envs {
@@ -59,7 +59,7 @@ func WithEnvs(envs []string) DoOption {
 func WithVars(vars []string) DoOption {
 	return func(d *Do) {
 		if len(vars) == 0 {
-			return 
+			return
 		}
 		data := make(map[string]string, len(vars))
 		for _, v := range vars {
@@ -78,10 +78,11 @@ func WithVars(vars []string) DoOption {
 
 func (d *Do) Execute(ctx context.Context, tasks []string) error {
 	if len(tasks) == 0 {
-		for name, task := range d.root.Tasks.GetSource() {
-			if task.Default {
-				tasks = append(tasks, name)
-				continue
+		if d.root.Do != nil && d.root.Do.Len() > 0 {
+			for _, name := range d.root.Do.GetSource() {
+				if _, ok := d.root.Tasks.Get(name); ok {
+					tasks = append(tasks, name)
+				}
 			}
 		}
 		if len(tasks) == 0 {

@@ -2,9 +2,10 @@ vars:
   build-dir: ./build
   build-path: ./build/delease
 
+do: [test, build]
+
 tasks:
   build:
-    default: true
     cmds: 
       - run: |
           rm ${{build-dir}}/* -f

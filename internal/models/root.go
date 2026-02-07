@@ -5,6 +5,7 @@ import (
 )
 
 type Root struct {
+	Do      *DoSource      `yaml:"do" json:"do,omitempty"`
 	Include *IncludeSource `yaml:"includes" json:"includes,omitempty"`
 	Var     *VarSource     `yaml:"vars" json:"vars,omitempty"`
 	Tasks   *TaskSource    `yaml:"tasks" json:"tasks"`
@@ -34,6 +35,7 @@ func (r *Root) UnmarshalYAML(value *yaml.Node) error {
 	r.Var = root.Var
 	r.Env = root.Env
 	r.Include = root.Include
+	r.Do = root.Do
 
 	return nil
 }
@@ -48,6 +50,11 @@ func (r *Root) Merge(oth *Root, force bool) *Root {
 	res.Env = r.Env.Merge(oth.Env, force)
 	res.Tasks = r.Tasks.Merge(oth.Tasks, force)
 	res.Include = r.Include.Merge(oth.Include, force)
+	if force {
+		res.Do = oth.Do
+	} else {
+		res.Do = r.Do
+	}
 
 	return res
 }
@@ -100,3 +107,7 @@ func (i *IncludeSource) sort(left, right *IncludeSource) *IncludeSource {
 }
 
 var _ Mergeable[*IncludeSource] = (*IncludeSource)(nil)
+
+type DoSource struct {
+	YamlSliceSource[string]
+}
