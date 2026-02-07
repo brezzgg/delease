@@ -39,8 +39,8 @@ func Test_UnmarshalTest(t *testing.T) {
 	})
 
 	t.Run("root.include", func(t *testing.T) {
-		if a := []string{"inc1", "inc2"}; !reflect.DeepEqual(a, result.Include.Get()) {
-			t.Errorf("root.Var = %v, want = %v", a, result.Include.Get())
+		if a := []string{"inc1", "inc2"}; !reflect.DeepEqual(a, result.Include.GetSource()) {
+			t.Errorf("root.Var = %v, want = %v", a, result.Include.GetSource())
 		}
 	})
 
@@ -66,8 +66,8 @@ func Test_UnmarshalTest(t *testing.T) {
 		c := make([]*models.Command, 2)
 		c[0] = &models.Command{Raw: "cmd1"}
 		c[1] = &models.Command{Raw: "cmd2"}
-		if !reflect.DeepEqual(c, v.Cmds.Get()) {
-			t.Errorf("task1.Var = %v, want = %v", v.Cmds.Get(), c)
+		if !reflect.DeepEqual(c, v.Cmds.GetSource()) {
+			t.Errorf("task1.Var = %v, want = %v", v.Cmds.GetSource(), c)
 		}
 	})
 
@@ -82,8 +82,8 @@ func Test_UnmarshalTest(t *testing.T) {
 		c := make([]*models.Command, 2)
 		c[0] = &models.Command{Raw: "cmd1"}
 		c[1] = &models.Command{Raw: "cmd2"}
-		if !reflect.DeepEqual(c, v.Cmds.Get()) {
-			t.Errorf("task2.Var = %v, want = %v", v.Cmds.Get(), c)
+		if !reflect.DeepEqual(c, v.Cmds.GetSource()) {
+			t.Errorf("task2.Var = %v, want = %v", v.Cmds.GetSource(), c)
 		}
 	})
 
@@ -92,8 +92,8 @@ func Test_UnmarshalTest(t *testing.T) {
 
 		c := make([]*models.Command, 2)
 		c[0] = &models.Command{Raw: "cmd1 \\\n  -v\ncmd2\n"}
-		if !reflect.DeepEqual(c[0].Raw, v.Cmds.Get()[0].Raw) {
-			t.Errorf("task3.cmd\nexpc = %v\nwant = %v", v.Cmds.Get()[0].Raw, c[0].Raw)
+		if !reflect.DeepEqual(c[0].Raw, v.Cmds.GetSource()[0].Raw) {
+			t.Errorf("task3.cmd\nexpc = %v\nwant = %v", v.Cmds.GetSource()[0].Raw, c[0].Raw)
 		}
 	})
 
@@ -102,8 +102,8 @@ func Test_UnmarshalTest(t *testing.T) {
 
 		c := make([]*models.Command, 2)
 		c[0] = &models.Command{Raw: "cmd1\ncmd2\n"}
-		if !reflect.DeepEqual(c[0].Raw, v.Cmds.Get()[0].Raw) {
-			t.Errorf("task4.cmd\nexpc = %v\nwant = %v", v.Cmds.Get()[0].Raw, c[0].Raw)
+		if !reflect.DeepEqual(c[0].Raw, v.Cmds.GetSource()[0].Raw) {
+			t.Errorf("task4.cmd\nexpc = %v\nwant = %v", v.Cmds.GetSource()[0].Raw, c[0].Raw)
 		}
 	})
 
@@ -113,8 +113,8 @@ func Test_UnmarshalTest(t *testing.T) {
 		c := make([]*models.Command, 2)
 		c[0] = &models.Command{Raw: "cmd1"}
 		c[1] = &models.Command{Raw: "cmd2\n", Os: "windows"}
-		if !reflect.DeepEqual(c[0].Raw, v.Cmds.Get()[0].Raw) {
-			t.Errorf("task5.cmd\nexpc = %v\nwant = %v", v.Cmds.Get()[0].Raw, c[0].Raw)
+		if !reflect.DeepEqual(c[0].Raw, v.Cmds.GetSource()[0].Raw) {
+			t.Errorf("task5.cmd\nexpc = %v\nwant = %v", v.Cmds.GetSource()[0].Raw, c[0].Raw)
 		}
 	})
 }

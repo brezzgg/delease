@@ -51,7 +51,7 @@ func (t *TaskLoader) load(task string, recursive bool) ([]*models.Task, error) {
 	var after, before []*models.Task
 	if recursive {
 		if current.Before != nil {
-			for _, v := range current.Before.Get() {
+			for _, v := range current.Before.GetSource() {
 				var (
 					tasks []*models.Task
 					err   error
@@ -71,7 +71,7 @@ func (t *TaskLoader) load(task string, recursive bool) ([]*models.Task, error) {
 			}
 		}
 		if current.After != nil {
-			for _, v := range current.After.Get() {
+			for _, v := range current.After.GetSource() {
 				var (
 					tasks []*models.Task
 					err   error

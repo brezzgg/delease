@@ -22,14 +22,6 @@ func (s *YamlSliceSource[V]) SetSource(src []V) {
 	s.data = src
 }
 
-func (s *YamlSliceSource[V]) Get() []V {
-	return s.data
-}
-
-func (s *YamlSliceSource[V]) GetCopy() []V {
-	return SliceCopy(s.data)
-}
-
 func (s *YamlSliceSource[V]) Len() int {
 	if s == nil {
 		return 0

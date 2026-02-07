@@ -18,7 +18,7 @@ func (c *CmdSource) Compile(ctx *VarContext) ([]string, error) {
 		return nil, nil
 	}
 
-	cmds := c.Get()
+	cmds := c.GetSource()
 	result := make([]string, 0, len(cmds))
 
 	for i, cmd := range cmds {

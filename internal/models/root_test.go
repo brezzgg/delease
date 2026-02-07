@@ -84,7 +84,7 @@ func TestIncludeSource_Merge(t *testing.T) {
 			rsrc.SetSource(tt.right)
 			got := lsrc.Merge(rsrc, tt.force)
 
-			if !reflect.DeepEqual(got.Get(), tt.want) {
+			if !reflect.DeepEqual(got.GetSource(), tt.want) {
 				t.Errorf("Merge() = %v, want %v", got, tt.want)
 			}
 		})

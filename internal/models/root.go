@@ -80,13 +80,13 @@ func (i *IncludeSource) Merge(oth *IncludeSource, force bool) *IncludeSource {
 
 func (i *IncludeSource) sort(left, right *IncludeSource) *IncludeSource {
 	rIndex := make(map[string]int, right.Len())
-	pre := right.GetCopy()
+	pre := right.GetSourceCopy()
 
 	for i, v := range pre {
 		rIndex[v] = i
 	}
 
-	for _, v := range left.GetCopy() {
+	for _, v := range left.GetSourceCopy() {
 		idx, ok := rIndex[v]
 		if ok {
 			pre[idx] = ""

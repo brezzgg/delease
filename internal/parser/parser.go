@@ -60,7 +60,7 @@ func (p *Parser) parse(def, cwd string) (*models.Root, error) {
 	currentRoot := hroot.Root()
 
 	if currentRoot.Include != nil && currentRoot.Include.Len() > 0 {
-		for _, includePath := range currentRoot.Include.GetCopy() {
+		for _, includePath := range currentRoot.Include.GetSourceCopy() {
 			includedRoot, err := p.parse(includePath, cwd)
 			if err != nil {
 				return nil, err
