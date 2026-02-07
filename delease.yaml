@@ -17,9 +17,6 @@ tasks:
         run: "${{build-path}}.exe ${{os.args}}"
       - os: linux
         run: "${{build-path}} ${{os.args}}"
-  t:
-    cmds: 
-      - run: |
-          go version
-          echo "${{.build-path}}"
-          dlv version
+  test:
+    cmds:
+      - go test -count=1 ./...
