@@ -134,7 +134,6 @@ tasks:
   task1:
     vars: 
       var2: val 4
-    default: true
     cmds: [cmd1, cmd2]
   task2:
     envs:
