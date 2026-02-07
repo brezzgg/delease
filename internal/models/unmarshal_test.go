@@ -24,8 +24,8 @@ func Test_UnmarshalTest(t *testing.T) {
 		if m := map[string]string{
 			"var1": "val 1",
 			"var2": "val 2",
-		}; !reflect.DeepEqual(m, result.Var.GetMap()) {
-			t.Errorf("root.Var = %v, want = %v", m, result.Var.GetMap())
+		}; !reflect.DeepEqual(m, result.Var.GetSource()) {
+			t.Errorf("root.Var = %v, want = %v", m, result.Var.GetSource())
 		}
 	})
 
@@ -33,8 +33,8 @@ func Test_UnmarshalTest(t *testing.T) {
 		if m := map[string]string{
 			"env1": "env 1",
 			"env2": "env 2",
-		}; !reflect.DeepEqual(m, result.Env.GetMap()) {
-			t.Errorf("root.Var = %v, want = %v", m, result.Env.GetMap())
+		}; !reflect.DeepEqual(m, result.Env.GetSource()) {
+			t.Errorf("root.Var = %v, want = %v", m, result.Env.GetSource())
 		}
 	})
 
@@ -44,7 +44,7 @@ func Test_UnmarshalTest(t *testing.T) {
 		}
 	})
 
-	tasks := result.Tasks.GetMap()
+	tasks := result.Tasks.GetSource()
 
 	t.Run("tasks len check", func(t *testing.T) {
 		if len(tasks) != 5 {
@@ -59,8 +59,8 @@ func Test_UnmarshalTest(t *testing.T) {
 		v := tasks["task1"]
 		if m := map[string]string{
 			"var2": "val 4",
-		}; !reflect.DeepEqual(m, v.Vars.GetMap()) {
-			t.Errorf("task1.Var = %v, want = %v", m, v.Vars.GetMap())
+		}; !reflect.DeepEqual(m, v.Vars.GetSource()) {
+			t.Errorf("task1.Var = %v, want = %v", m, v.Vars.GetSource())
 		}
 
 		c := make([]*models.Command, 2)
@@ -75,8 +75,8 @@ func Test_UnmarshalTest(t *testing.T) {
 		v := tasks["task2"]
 		if m := map[string]string{
 			"env1": "env 1",
-		}; !reflect.DeepEqual(m, v.Env.GetMap()) {
-			t.Errorf("task2.Var = %v, want = %v", m, v.Env.GetMap())
+		}; !reflect.DeepEqual(m, v.Env.GetSource()) {
+			t.Errorf("task2.Var = %v, want = %v", m, v.Env.GetSource())
 		}
 
 		c := make([]*models.Command, 2)

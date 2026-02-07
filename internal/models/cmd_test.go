@@ -6,7 +6,7 @@ import (
 	"github.com/brezzgg/delease/internal/models"
 )
 
-func TestCommand_ApplyVars(t *testing.T) {
+func TestCommand_CompileTest(t *testing.T) {
 	tests := []struct {
 		name    string
 		raw     string
@@ -70,26 +70,34 @@ func TestCommand_ApplyVars(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			c := &models.Command{
+			cmd := &models.Command{
 				Raw: tt.raw,
 			}
-			if err := c.ParseVars(); err != nil {
+			if err := cmd.ParseVars(); err != nil {
 				t.Errorf("failed to parse vars: %s", err.Error())
 			}
+
 			varSrc := &models.VarSource{}
 			varSrc.SetSource(tt.vars)
-			got, gotErr := c.ApplyVars(varSrc)
+
+			task := &models.Task{Cmds: &models.CmdSource{}}
+			task.Cmds.SetSource([]*models.Command{cmd})
+
+			ctx := models.NewRootVarContext(varSrc)
+			taskCtx := ctx.Child(task.Vars)
+
+			got, gotErr := cmd.Compile(taskCtx)
 			if gotErr != nil {
 				if !tt.wantErr {
-					t.Errorf("ApplyVars() failed: %v", gotErr)
+					t.Errorf("CompileVars() failed: %v", gotErr)
 				}
 				return
 			}
 			if tt.wantErr {
-				t.Fatal("ApplyVars() succeeded unexpectedly")
+				t.Fatal("CompileVars() succeeded unexpectedly")
 			}
 			if got != tt.want {
-				t.Errorf("ApplyVars() = %v, want %v", got, tt.want)
+				t.Errorf("CompileVars() = %v, want %v", got, tt.want)
 			}
 		})
 	}
