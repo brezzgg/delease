@@ -10,6 +10,12 @@ var (
 )
 
 func Run() {
+	rootCmd.PersistentFlags().BoolVarP(
+		&verbose, "verbose", "v", false, "verbose output",
+	)
+	rootCmd.PersistentFlags().BoolVarP(
+		&indent, "indent", "i", false, "indent output",
+	)
 	rootCmd.PersistentFlags().StringVarP(
 		&config, "config", "C", "", "specify config file",
 	)

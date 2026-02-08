@@ -7,6 +7,9 @@ import (
 var (
 	rootCmd = &cobra.Command{
 		Use: "delease",
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			configureLogger(verbose)
+		},
 	}
 
 	uiCmd = &cobra.Command{
