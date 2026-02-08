@@ -22,10 +22,10 @@ func (v OsVar) String() string {
 
 func GetOsVars(args string) *models.VarSource {
 	v := &models.VarSource{}
-	v.SetSource(map[string]string{
-		OsVarArgs.String(): args,
-		OsVarOs.String():   runtime.GOOS,
-		OsVarArch.String(): runtime.GOARCH,
+	v.SetSource(map[string]*models.Var{
+		OsVarArgs.String(): models.NewVar(args, models.VarTypeOs),
+		OsVarOs.String():   models.NewVar(runtime.GOOS, models.VarTypeOs),
+		OsVarArch.String(): models.NewVar(runtime.GOARCH, models.VarTypeOs),
 	})
 	return v
 }

@@ -13,16 +13,17 @@ func NewTaskCompiler(rootCtx *models.VarContext) *TaskCompiler {
 	return &TaskCompiler{rootCtx: rootCtx}
 }
 
-func (c *TaskCompiler) Compile(task *models.Task) ([]string, error) {
-	if task == nil {
+func (c *TaskCompiler) Compile(task *Task) ([]string, error) {
+	if task == nil || task.Task == nil {
 		return nil, lg.Ef("task is nil")
 	}
 
-	if task.Cmds == nil || task.Cmds.Len() == 0 {
+	if task.Task.Cmds == nil || task.Task.Cmds.Len() == 0 {
 		return []string{}, nil
 	}
 
-	taskCtx := c.rootCtx.Child(task.Vars)
+	vars := task.Task.Vars.Merge(task.Params, true)
+	taskCtx := c.rootCtx.Child(vars)
 
-	return task.Cmds.Compile(taskCtx)
+	return task.Task.Cmds.Compile(taskCtx)
 }

@@ -61,12 +61,12 @@ func WithVars(vars []string) DoOption {
 		if len(vars) == 0 {
 			return
 		}
-		data := make(map[string]string, len(vars))
+		data := make(map[string]*models.Var, len(vars))
 		for _, v := range vars {
 			if strings.Contains(v, "=") {
 				before, after, ok := strings.Cut(v, "=")
 				if ok {
-					data[before] = after
+					data[before] = models.NewVar(after, models.VarTypeStatic)
 				}
 			}
 		}
@@ -76,18 +76,16 @@ func WithVars(vars []string) DoOption {
 	}
 }
 
-func (d *Do) Execute(ctx context.Context, tasks []string) error {
-	if len(tasks) == 0 {
-		if d.root.Do != nil && d.root.Do.Len() > 0 {
-			for _, name := range d.root.Do.GetSource() {
-				if _, ok := d.root.Tasks.Get(name); ok {
-					tasks = append(tasks, name)
-				}
-			}
-		}
-		if len(tasks) == 0 {
-			return lg.Ef("default task not set, use 'task.default: true'")
-		}
+func (d *Do) Execute(ctx context.Context, taskNames []string) error {
+	var (
+		tasks = NewTasks(taskNames)
+		err   error
+	)
+
+	paramParser := NewParamsStage(d.root, tasks)
+	tasks, err = paramParser.Stage()
+	if err != nil {
+		return lg.Ef("params stage error: %w", err)
 	}
 
 	osVars := GetOsVars(d.runtimeArgs)
@@ -96,38 +94,39 @@ func (d *Do) Execute(ctx context.Context, tasks []string) error {
 		runtimeVars = osVars.Merge(d.runtimeVars, true)
 	}
 
-	rootCtx := models.NewRootVarContext(d.root.Var, runtimeVars)
+	rootCtx := models.NewVarContext(d.root.Var, runtimeVars)
 	compiler := NewTaskCompiler(rootCtx)
 
-	taskLoader := NewTaskLoader(tasks, d.root)
-	taskArr, err := taskLoader.Load()
+	taskLoader := NewLoadStage(tasks, d.root)
+	tasks, err = taskLoader.Stage()
 	if err != nil {
-		return err
+		return lg.Ef("load stage error: %w", err)
 	}
-	if len(taskArr) == 0 {
+	if len(tasks) == 0 {
 		return lg.Ef("nothing to do")
 	}
 
 	environ := GetEnv()
 
-	for _, task := range taskArr {
-		compiledCmds, err := compiler.Compile(task)
+	for _, task := range tasks {
+		var cmds []string
+		cmds, err = compiler.Compile(task)
 		if err != nil {
-			return lg.Ef("failed to compile task: %w", err)
+			return lg.Ef("compile error: %w", err)
 		}
 
-		env := environ.Merge(d.root.Env, true).Merge(task.Env, true)
+		env := environ.Merge(d.root.Env, true).Merge(task.Task.Env, true)
 		if d.runtimeEnvs != nil {
 			env = env.Merge(d.runtimeEnvs, true)
 		}
 
-		wd, err := d.GetDir(task.Dir)
+		wd, err := d.GetDir(task.Task.Dir)
 		if err != nil {
 			return lg.Ef("bad working directory: %w", err)
 		}
 
 		var exe exec.Executor = &exec.Sh{}
-		exe.Setup(wd, compiledCmds, env.StringSlice(), func(m string, t exec.MsgType) {
+		exe.Setup(wd, cmds, env.StringSlice(), func(m string, t exec.MsgType) {
 			if t == exec.MsgTypeStdout {
 				fmt.Print(m)
 			} else {
