@@ -21,9 +21,9 @@ func Test_UnmarshalTest(t *testing.T) {
 	})
 
 	t.Run("root.var", func(t *testing.T) {
-		if m := map[string]string{
-			"var1": "val 1",
-			"var2": "val 2",
+		if m := map[string]*models.Var{
+			"var1": models.NewVarT("val 1"),
+			"var2": models.NewVarT("val 2"),
 		}; !reflect.DeepEqual(m, result.Var.GetSource()) {
 			t.Errorf("root.Var = %v, want = %v", m, result.Var.GetSource())
 		}
@@ -57,8 +57,8 @@ func Test_UnmarshalTest(t *testing.T) {
 
 	t.Run("task 1 check", func(t *testing.T) {
 		v := tasks["task1"]
-		if m := map[string]string{
-			"var2": "val 4",
+		if m := map[string]*models.Var{
+			"var2": models.NewVarT("val 4"),
 		}; !reflect.DeepEqual(m, v.Vars.GetSource()) {
 			t.Errorf("task1.Var = %v, want = %v", m, v.Vars.GetSource())
 		}

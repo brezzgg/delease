@@ -77,13 +77,17 @@ func TestCommand_CompileTest(t *testing.T) {
 				t.Errorf("failed to parse vars: %s", err.Error())
 			}
 
+			varMap := make(map[string]*models.Var, len(tt.vars))
+			for k, v := range tt.vars {
+				varMap[k] = models.NewVarT(v)
+			}
 			varSrc := &models.VarSource{}
-			varSrc.SetSource(tt.vars)
+			varSrc.SetSource(varMap)
 
 			task := &models.Task{Cmds: &models.CmdSource{}}
 			task.Cmds.SetSource([]*models.Command{cmd})
 
-			ctx := models.NewRootVarContext(varSrc)
+			ctx := models.NewVarContext(varSrc)
 			taskCtx := ctx.Child(task.Vars)
 
 			got, gotErr := cmd.Compile(taskCtx)
