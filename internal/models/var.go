@@ -1,7 +1,13 @@
 package models
 
+import (
+	"strings"
+
+	"gopkg.in/yaml.v3"
+)
+
 type VarSource struct {
-	YamlMapSource[string]
+	YamlMapSource[*Var]
 }
 
 func (v *VarSource) Merge(oth *VarSource, force bool) *VarSource {
@@ -13,4 +19,68 @@ func (v *VarSource) Merge(oth *VarSource, force bool) *VarSource {
 	return &VarSource{YamlMapSource: merged}
 }
 
-var _ Mergeable[*VarSource] = (*VarSource)(nil)
+func (v *VarSource) UnmarshalYAML(value *yaml.Node) error {
+	var data map[string]string
+	if err := value.Decode(&data); err != nil {
+		return err
+	}
+
+	result := make(map[string]*Var, len(data))
+	for k, v := range data {
+		result[k] = NewVarT(v)
+	}
+	v.SetSource(result)
+
+	return nil
+}
+
+var (
+	_ Mergeable[*VarSource] = (*VarSource)(nil)
+	_ yaml.Unmarshaler      = (*VarSource)(nil)
+)
+
+type VarType string
+
+const (
+	VarTypeStatic  = "static"
+	VarTypeDynamic = "dynamic"
+	VarTypeOs      = "os"
+	VarTypeAny     = "any"
+)
+
+type Var struct {
+	Type    VarType
+	Content string
+}
+
+func NewVar(raw string, varType VarType) *Var {
+	return &Var{
+		Type:    varType,
+		Content: strings.TrimPrefix(raw, "."),
+	}
+}
+
+func NewVarT(raw string) *Var {
+	return &Var{
+		Type:    GetVarType(raw),
+		Content: strings.TrimPrefix(raw, "."),
+	}
+}
+
+func (v *Var) IsType(varType VarType) bool {
+	if varType == VarTypeAny {
+		return true
+	}
+	return v.Type == varType
+}
+
+func GetVarType(raw string) VarType {
+	switch {
+	case strings.HasPrefix(raw, "."):
+		return VarTypeDynamic
+	case strings.HasPrefix(raw, "os."):
+		return VarTypeOs
+	default:
+		return VarTypeStatic
+	}
+}

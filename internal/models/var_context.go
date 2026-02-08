@@ -1,13 +1,14 @@
 package models
 
 type VarContext struct {
-	parent *VarContext
-	source *VarSource
+	parent       *VarContext
+	source       *VarSource
+	example bool
 }
 
-func NewRootVarContext(sources ...*VarSource) *VarContext {
+func NewVarContext(src ...*VarSource) *VarContext {
 	var merged *VarSource
-	for _, src := range sources {
+	for _, src := range src {
 		if src == nil || src.Len() == 0 {
 			continue
 		}
@@ -23,27 +24,40 @@ func NewRootVarContext(sources ...*VarSource) *VarContext {
 	}
 
 	return &VarContext{
-		parent: nil,
-		source: merged,
+		parent:       nil,
+		source:       merged,
+		example: false,
 	}
 }
 
-func (c *VarContext) Child(source *VarSource) *VarContext {
+func NewExampleVarContext(src ...*VarSource) *VarContext {
+	c := NewVarContext()
+	c.example = true
+	return c
+}
+
+func (c *VarContext) Child(src *VarSource) *VarContext {
 	return &VarContext{
 		parent: c,
-		source: source,
+		source: src,
 	}
 }
 
-func (c *VarContext) Get(key string) (string, bool) {
+func (c *VarContext) Get(key string, varType VarType) (string, bool) {
+	if c.example && (varType == VarTypeDynamic || varType == VarTypeOs)  {
+		return key, true
+	}
+
 	if c.source != nil {
 		if val, ok := c.source.Get(key); ok {
-			return val, true
+			if val.IsType(varType) {
+				return val.Content, true
+			}
 		}
 	}
 
 	if c.parent != nil {
-		return c.parent.Get(key)
+		return c.parent.Get(key, varType)
 	}
 
 	return "", false
@@ -66,7 +80,7 @@ func (c *VarContext) Flatten() *VarSource {
 	return parentFlat.Merge(c.source, true)
 }
 
-func (c *VarContext) GetAllSource() map[string]string {
+func (c *VarContext) GetAllSource() map[string]*Var {
 	flat := c.Flatten()
 	return flat.GetSource()
 }

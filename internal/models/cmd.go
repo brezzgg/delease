@@ -36,9 +36,9 @@ func (c *CmdSource) Compile(ctx *VarContext) ([]string, error) {
 }
 
 type Command struct {
-	Raw  string
-	Vars []CommandVar
-	Os   string
+	Raw  string       `json:"raw"`
+	Vars []CommandVar `json:"vars,omitempty"`
+	Os   string       `json:"os,omitempty"`
 }
 
 func (c *Command) Compile(ctx *VarContext) (string, error) {
@@ -59,9 +59,9 @@ func (c *Command) Compile(ctx *VarContext) (string, error) {
 	result := c.Raw
 
 	for _, cmdVar := range c.Vars {
-		val, ok := ctx.Get(cmdVar.Name)
+		val, ok := ctx.Get(cmdVar.Name, cmdVar.Type)
 		if !ok {
-			return "", lg.Ef("variable %q required but not found", cmdVar.Name)
+			return "", lg.Ef("%s variable %s required but not found", cmdVar.Type, cmdVar.Name)
 		}
 		result = strings.ReplaceAll(result, cmdVar.Raw, val)
 	}
@@ -108,19 +108,21 @@ func (c *Command) ParseVars() error {
 
 	varRe := regexp.MustCompile(`\$\{\{\s*([a-zA-Z0-9._-]{1,256})\s*\}\}`)
 
+	nameIndex := make(map[string]struct{})
+
 	varRe.ReplaceAllStringFunc(c.Raw, func(raw string) string {
 		match := varRe.FindStringSubmatch(raw)
 		name := match[1]
 
-		var t CommandVarType
-		if strings.HasPrefix(name, ".") {
+		t := GetVarType(name)
+		if t == VarTypeDynamic {
 			name = name[1:]
-			t = CmdVarTypeDynamic
-		} else if strings.HasPrefix(name, "os.") {
-			t = CmdVarTypeOs
-		} else {
-			t = CmdVarTypeStatic
 		}
+
+		if _, ok := nameIndex[name]; ok {
+			return raw
+		}
+		nameIndex[name] = struct{}{}
 
 		c.Vars = append(c.Vars, CommandVar{
 			Name: name,
@@ -136,16 +138,8 @@ func (c *Command) ParseVars() error {
 
 var _ yaml.Unmarshaler = (*Command)(nil)
 
-type CommandVarType int
-
-const (
-	CmdVarTypeStatic CommandVarType = iota
-	CmdVarTypeDynamic
-	CmdVarTypeOs
-)
-
 type CommandVar struct {
-	Name string
-	Raw  string
-	Type CommandVarType
+	Name string  `json:"name,omitempty"`
+	Raw  string  `json:"-"`
+	Type VarType `json:"type,omitempty"`
 }
