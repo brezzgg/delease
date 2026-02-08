@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 
 	"github.com/brezzgg/go-packages/lg"
 )
@@ -49,7 +48,7 @@ func FindConfig(def, cwd string) ([]byte, string, error) {
 
 	fileName := ""
 	for _, v := range files {
-		if strings.HasSuffix(v, "delease.yaml") {
+		if filepath.Base(v) == "delease.yaml" {
 			fileName = v
 		}
 	}
