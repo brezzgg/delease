@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/brezzgg/delease/internal/do"
 	"github.com/brezzgg/delease/internal/models"
 	"github.com/brezzgg/delease/internal/parser"
 	"github.com/brezzgg/go-packages/lg"
@@ -10,7 +9,7 @@ import (
 
 var (
 	printCmd  bool
-	compile    bool
+	compile   bool
 	taskNames bool
 )
 
@@ -25,13 +24,11 @@ var (
 				lg.Fatal(ErrParseFailed(err))
 			}
 
-			compileC := make(lg.C)
+			var compileC lg.C
 			// if -a: compile vars
 			if compile {
-				ctx := models.NewRootVarContext(
-					root.Var,
-					do.GetOsVars(""),
-				)
+				compileC = make(lg.C)
+				ctx := models.NewExampleVarContext(root.Var)
 
 				for name, task := range root.Tasks.GetSource() {
 					taskCtx := ctx.Child(task.Vars)
@@ -43,7 +40,10 @@ var (
 				}
 			}
 
-			lg.Info("parse successful", lg.C{"root": root}, lg.C{"cmds": compileC})
+			if compileC == nil {
+				compileC = lg.C{"help": "use `-a` to see compiled commands"}
+			}
+			lg.Info("parse successful", lg.C{"root": root}, lg.C{"compiled_cmds": compileC})
 		},
 	}
 
@@ -68,14 +68,14 @@ var (
 
 			// if -a: compile vars
 			if compile {
-				ctx := models.NewRootVarContext(root.Var, do.GetOsVars(""))
+				ctx := models.NewExampleVarContext(root.Var)
 				taskCtx := ctx.Child(task.Vars)
 				compiled, err := task.Cmds.Compile(taskCtx)
 				if err != nil {
 					lg.Fatal(ErrCompileVars(err))
 				}
 				lg.Info("ok", lg.C{
-					"task":          args[0],
+					"task":          task,
 					"compiled_cmds": compiled,
 				})
 			} else {
@@ -104,7 +104,7 @@ var (
 			case printCmd:
 				c := make(lg.C, root.Tasks.Len())
 				if compile {
-					ctx := models.NewRootVarContext(root.Var, do.GetOsVars(""))
+					ctx := models.NewExampleVarContext(root.Var)
 					for key, task := range root.Tasks.GetSource() {
 						taskCtx := ctx.Child(task.Vars)
 						compiled, err := task.Cmds.Compile(taskCtx)
