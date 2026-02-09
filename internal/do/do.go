@@ -109,6 +109,10 @@ func (d *Do) Execute(ctx context.Context, taskNames []string) error {
 	environ := GetEnv()
 
 	for _, task := range tasks {
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+
 		var cmds []string
 		cmds, err = compiler.Compile(task)
 		if err != nil {
