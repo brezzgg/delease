@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"context"
+
 	"github.com/spf13/cobra"
 )
 
@@ -9,6 +11,10 @@ var (
 		Use: "delease",
 		PersistentPreRun: func(cmd *cobra.Command, args []string) {
 			configureLogger(verbose)
+
+			ctx, cancel := context.WithCancel(context.Background())
+			cmd.SetContext(ctx)
+			shutdown(cancel)
 		},
 	}
 
