@@ -9,8 +9,9 @@ tasks:
     cmds: 
       - run: |
           rm ${{build-dir}}/* -f
-          GOOS=windows GOARCH=${{os.arch}} go build -o ${{build-path}}.exe .
-          GOOS=linux GOARCH=${{os.arch}} go build -o ${{build-path}} .
+          GOOS=windows GOARCH=${{os.arch}} go build -o ${{build-path}}.exe . & \
+          GOOS=linux GOARCH=${{os.arch}} go build -o ${{build-path}} . & \
+          wait
   run:
     before: ["build"]
     cmds:
@@ -21,3 +22,14 @@ tasks:
   test:
     cmds:
       - go test -count=1 ./...
+  lint:
+    cmds:
+      - run: |
+          golangci-lint run ./...
+  debug:
+    cmds:
+      - run: |
+          rm -f ./__debug_bin*
+          dlv debug . \
+            --headless --listen=127.0.0.1:38697 \
+            --api-version=2 -- ${{os.args}}
