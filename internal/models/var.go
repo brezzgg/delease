@@ -27,7 +27,7 @@ func (v *VarSource) UnmarshalYAML(value *yaml.Node) error {
 
 	result := make(map[string]*Var, len(data))
 	for k, v := range data {
-		result[k] = NewVarT(v)
+		result[k] = NewVarT(k, v)
 	}
 	v.SetSource(result)
 
@@ -56,14 +56,14 @@ type Var struct {
 func NewVar(raw string, varType VarType) *Var {
 	return &Var{
 		Type:    varType,
-		Content: strings.TrimPrefix(raw, "."),
+		Content: raw,
 	}
 }
 
-func NewVarT(raw string) *Var {
+func NewVarT(name, raw string) *Var {
 	return &Var{
-		Type:    GetVarType(raw),
-		Content: strings.TrimPrefix(raw, "."),
+		Type:    GetVarType(name),
+		Content: raw,
 	}
 }
 

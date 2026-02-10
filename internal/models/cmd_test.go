@@ -79,7 +79,7 @@ func TestCommand_CompileTest(t *testing.T) {
 
 			varMap := make(map[string]*models.Var, len(tt.vars))
 			for k, v := range tt.vars {
-				varMap[k] = models.NewVarT(v)
+				varMap[k] = models.NewVarT(k, v)
 			}
 			varSrc := &models.VarSource{}
 			varSrc.SetSource(varMap)
