@@ -51,6 +51,22 @@ func (s *Sh) RunLine(ctx context.Context, line int) Result {
 		}
 	}
 
+	var msgSb strings.Builder
+	msgSb.WriteString(lg.T(s.lines[line]))
+	split := strings.Split(msgSb.String(), "\n")
+	msgSb.Reset()
+	for i, v := range split {
+		if i == 0 {
+			msgSb.WriteString("$ ")
+			msgSb.WriteString(v)
+		} else {
+			msgSb.WriteString("  ")
+			msgSb.WriteString(v)
+		}
+		msgSb.WriteString("\n")
+	}
+
+	s.ow.log(msgSb.String(), MsgTypeStdout)
 	err = s.runner.Run(ctx, file)
 
 	var exitErr interp.ExitStatus
