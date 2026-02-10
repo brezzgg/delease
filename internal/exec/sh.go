@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/brezzgg/delease/internal/exec/handlers"
 	"github.com/brezzgg/go-packages/lg"
@@ -22,11 +23,13 @@ type Sh struct {
 func (s *Sh) Setup(wd string, lines, env []string, log Logger) error {
 	s.ow, s.ew = NewSyncWriter(log, MsgTypeStdout), NewSyncWriter(log, MsgTypeStderr)
 
+	handlers.KillTimeout = time.Millisecond * 750
+
 	runner, err := interp.New(
 		interp.Dir(wd),
 		interp.Env(expand.ListEnviron(env...)),
 		interp.StdIO(nil, s.ow, s.ew),
-		interp.ExecHandlers(handlers.ExecHandler),
+		interp.ExecHandlers(handlers.Get()...),
 	)
 	if err != nil {
 		return err
