@@ -50,6 +50,7 @@ func Run() {
 		uiCmd,
 		configCmd,
 		doCmd,
+		listCmd,
 	)
 	configCmd.AddCommand(
 		configParseCmd,
