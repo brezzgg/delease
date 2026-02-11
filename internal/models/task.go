@@ -23,12 +23,13 @@ func (t *TaskSource) Merge(oth *TaskSource, force bool) *TaskSource {
 var _ Mergeable[*TaskSource] = (*TaskSource)(nil)
 
 type Task struct {
-	Before  *TaskCallSource `yaml:"before" json:"before,omitempty"`
-	After   *TaskCallSource `yaml:"after" json:"after,omitempty"`
-	Cmds    *CmdSource      `yaml:"cmds" json:"cmds"`
-	Dir     string          `yaml:"dir" json:"dir,omitempty"`
-	Vars    *VarSource      `yaml:"vars" json:"vars,omitempty"`
-	Env     *EnvSource      `yaml:"envs" json:"envs,omitempty"`
+	Before *TaskCallSource `yaml:"before" json:"before,omitempty"`
+	After  *TaskCallSource `yaml:"after" json:"after,omitempty"`
+	Cmds   *CmdSource      `yaml:"cmds" json:"cmds"`
+	Dir    string          `yaml:"dir" json:"dir,omitempty"`
+	Vars   *VarSource      `yaml:"vars" json:"vars,omitempty"`
+	Env    *EnvSource      `yaml:"envs" json:"envs,omitempty"`
+	Desc   string          `yaml:"desc" json:"desc,omitempty"`
 }
 
 type TaskCallSource struct {
